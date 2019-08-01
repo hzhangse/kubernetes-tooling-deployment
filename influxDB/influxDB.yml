@@ -1,0 +1,91 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: paascloud-db-influxdb
+  name: paascloud-db-influxdb
+#  namespace: app-uat
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    app: paascloud-db-influxdb
+    deploymentconfig: paascloud-db-influxdb
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: paascloud-db-influxdb
+        deploymentconfig: paascloud-db-influxdb
+    spec:
+      containers:
+        - image: 'influxdb:latest'
+          imagePullPolicy: IfNotPresent
+          name: paascloud-db-influxdb
+          ports:
+            - containerPort: 8086
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/influxdb
+              name: paascloud-db-influxdb
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: paascloud-db-influxdb
+          persistentVolumeClaim:
+            claimName: paascloud-db-influxdb-100
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: paascloud-db-influxdb-100
+#  namespace: app-uat
+  annotations:
+    volume.beta.kubernetes.io/storage-class: glusterfs-storage
+    volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/glusterfs
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: paascloud-db-influxdb
+#  namespace: app-uat
+  labels:
+    app: paascloud-db-influxdb
+spec:
+  ports:
+    - name: 8086-tcp
+      protocol: TCP
+      port: 8086
+      targetPort: 8086
+  selector:
+    app: paascloud-db-influxdb
+    deploymentconfig: paascloud-db-influxdb
+

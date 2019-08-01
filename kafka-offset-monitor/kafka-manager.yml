@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-offset-monitor
+  namespace: zhanghong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-offset-monitor
+  template:
+    metadata:
+      labels:
+        app: kafka-offset-monitor
+    spec:
+      imagePullSecrets:
+      - name: secret-aliyuncs
+      containers:
+      - name: kafka-offset-monitor
+        image: registry.cn-hangzhou.aliyuncs.com/iotbull/kafka-offset-monitor:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: ZK
+          value: paascloud-provider-zk1.zhanghong.svc.cluster.local:2181 
+        - name: BROKER
+          value: paascloud-kafka1.iotbull:9092
+#        - name: port
+#          value: 8081 
+#        - name: KAFKA_OFFSET_KAFKA_SERVER
+#          value: paascloud-kafka1.iotbull
+#        - name: KAFKA_OFFSET_KAFKA_PORT
+#          value: 9092  
+          
+
+          

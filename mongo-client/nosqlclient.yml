@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nosqlclient
+#  namespace: zhanghong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nosqlclient
+  template:
+    metadata:
+      labels:
+        app: nosqlclient
+    spec:
+#      nodeSelector:
+#        paascloud_kafka: default     
+      containers:
+      - name: nosqlclient
+        image: mongoclient/mongoclient
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: MONGO_URL      
+          value: mongodb://pdc:pdc@mongo:27017       
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: nosqlclient
+#  namespace: zhanghong
+spec:
+  selector:
+    app: nosqlclient
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+
+
+          

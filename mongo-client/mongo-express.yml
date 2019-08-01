@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+#  namespace: zhanghong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+#      nodeSelector:
+#        paascloud_kafka: default     
+      containers:
+      - name: mongo-express
+        image: mongo-express
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: ME_CONFIG_MONGODB_AUTH_DATABASE
+          value: paascloud-tpc
+        - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+          value: tpc  
+        - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+          value: tpc  
+        - name: ME_CONFIG_MONGODB_ENABLE_ADMIN
+          value: 'false'
+        - name: ME_CONFIG_MONGODB_SERVER
+          value: '192.168.10.129'        
+
+
+          

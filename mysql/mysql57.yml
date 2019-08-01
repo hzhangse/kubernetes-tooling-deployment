@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paascloud-db-mysql
+#  namespace: zhanghong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paascloud-db-mysql
+  template:
+    metadata:
+      labels:
+        app: paascloud-db-mysql
+    spec:
+#      nodeSelector:
+#        paascloud_kafka: default     
+      nodeName: okd-node-5
+      containers:
+      - name: paascloud-db-mysql
+        image:  mysql:5.7
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "2"
+          limits:
+            memory: "2Gi"
+            cpu: "2"        
+        ports:
+        - containerPort: 3306
+          name: server     
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_DATABASE
+          value: paascloud_uac
+        - name: MYSQL_USER
+          value: iotbull
+        - name: MYSQL_PASSWORD
+          value: iotbull123          
+        volumeMounts:
+        - name: configmap
+          mountPath: /etc/mysql/conf.d/mysqld.cnf  
+          subPath: path/to/mysqld.cnf    
+        - name: paascloud-db-mysql
+          mountPath: /var/lib/mysql     
+      volumes:
+      - name: configmap
+        configMap:
+          name: mysql-config 
+          items:
+          - key: mysqld.cnf
+            path: path/to/mysqld.cnf
+#      - name: paascloud-db-mysql
+#        persistentVolumeClaim:
+#          claimName: paascloud-db-mysql
+      - name: paascloud-db-mysql
+        hostPath:
+          path: /work/zhanghong/mysql
+          type: ''
+                                                                                               
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: paascloud-db-mysql
+#  namespace: zhanghong
+spec:
+  selector:
+    app: paascloud-db-mysql
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  externalIPs:
+    - 192.168.10.32
+    
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: paascloud-db-mysql
+  annotations:
+    volume.beta.kubernetes.io/storage-class: glusterfs-storage
+    volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/glusterfs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  
+        
+
+
+          

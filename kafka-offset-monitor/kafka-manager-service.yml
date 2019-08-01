@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kafka-offset-monitor
+  namespace: zhanghong
+spec:
+  selector:
+    app: kafka-offset-monitor
+  ports:
+  - protocol: TCP
+    port: 8081
+    targetPort: 8081

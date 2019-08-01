@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canal-server
+#  namespace: zhanghong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canal-server
+  template:
+    metadata:
+      labels:
+        app: canal-server
+    spec:
+#      nodeSelector:
+#        paascloud_kafka: default     
+      imagePullSecrets:
+      - name: secret-aliyuncs
+      containers:
+      - name: canal-server
+        image: canal/canal-server
+        imagePullPolicy: Always
+#        2222 sys , 8000 debug , 11111 canal , 11112 metrics
+        ports:
+        - containerPort: 11111
+          name: canal
+        - containerPort: 8000
+          name: debug
+        - containerPort: 11112
+          name: metrics
+        - containerPort: 2222
+          name:  sys                   
+        env:
+        - name: canal.instance.master.address
+          value: paascloud-db-mysql:3306
+        - name: canal.instance.dbUsername
+          value: canal
+        - name: canal.instance.dbPassword
+          value: canal
+        - name: canal.instance.connectionCharse
+          value: UTF-8
+        - name: canal.instance.tsdb.enable
+          value: 'true'
+        - name: canal.instance.gtidon
+          value: 'false'  
+        - name: canal.instance.filter.regex
+          value: paascloud_uac\\.pc_uac_user,.pc_uac_role,.pc_uac_group
+        - name: canal.instance.defaultDatabaseName
+          value: paascloud_uac      
+        - name: canal.zkServers
+          value: paascloud-provider-zk:2181   
+#        - name: canal.serverMode
+#          value: kafka
+#        - name: canal.mq.servers
+#          value: paascloud-kafka:9092
+#        - name: canal.mq.flatMessage
+#          value: 'true'
+#        - name: canal.mq.transaction
+#          value: 'true'          
+#        - name: canal.mq.acks
+#          value: all                              
+#        - name: canal.mq.topic
+#          value: canal                 
+#        - name: canal.mq.partition
+#          value: '1'    
+#        - name: canal.mq.partitionHash
+#          value: pc_uac_user:id, pc_uac_role:id,  pc_uac_group:id             
+#        - name: canal.mq.partitionsNum
+#          value: 3       
+#库名.表名: 唯一主键，多个表之间用逗号分隔
+#canal.mq.partitionHash=mytest.person:id,mytest.role:id
+                                                                                               
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: canal-server
+#  namespace: zhanghong
+spec:
+  selector:
+    app: canal-server
+  ports:
+  - protocol: TCP
+    port: 11111
+    targetPort: 11111
+
+
+          
