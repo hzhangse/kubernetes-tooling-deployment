@@ -1,23 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: paascloud-db-mysql
+  name: paascloud-db-mysql2
 #  namespace: zhanghong
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: paascloud-db-mysql
+      app: paascloud-db-mysql2
   template:
     metadata:
       labels:
-        app: paascloud-db-mysql
+        app: paascloud-db-mysql2
     spec:
 #      nodeSelector:
 #        paascloud_kafka: default     
       nodeName: okd-node-5
+
       containers:
-      - name: paascloud-db-mysql
+      - name: paascloud-db-mysql2
         image:  mysql:5.7
         imagePullPolicy: Always
         resources:
@@ -43,8 +44,10 @@ spec:
         - name: configmap
           mountPath: /etc/mysql/conf.d/mysqld.cnf  
           subPath: path/to/mysqld.cnf    
-        - name: paascloud-db-mysql
-          mountPath: /var/lib/mysql     
+        - name: paascloud-db-mysql2
+          mountPath: /var/lib/mysql  
+        securityContext:
+          privileged: true     #挂本地磁盘时给权限         
       volumes:
       - name: configmap
         configMap:
@@ -52,45 +55,41 @@ spec:
           items:
           - key: mysqld.cnf
             path: path/to/mysqld.cnf
-#      - name: paascloud-db-mysql
+#      - name: paascloud-db-mysql2
 #        persistentVolumeClaim:
-#          claimName: paascloud-db-mysql
-      - name: paascloud-db-mysql
+#          claimName: paascloud-db-mysql2
+      - name: paascloud-db-mysql2
         hostPath:
-          path: /work/zhanghong/mysql
-          type: ''
-                                                                                               
+          path: /mysqlData1
+#          type: 'Directory'
+#      initContainers:
+#      - name: chmod-perm-mysql
+#        image: busybox     
+#        command: ['sh' ,'-c', 'chmod 777 -R /tmp']
+#        volumeMounts:
+#        - name: paascloud-db-mysql2
+#          mountPath: /tmp
+   
 
+                  
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: paascloud-db-mysql
+  name: paascloud-db-mysql2
 #  namespace: zhanghong
 spec:
   selector:
-    app: paascloud-db-mysql
+    app: paascloud-db-mysql2
   ports:
   - protocol: TCP
     port: 3306
     targetPort: 3306
   externalIPs:
-    - 192.168.10.32
+    - 192.168.10.132
     
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: paascloud-db-mysql
-  annotations:
-    volume.beta.kubernetes.io/storage-class: glusterfs-storage
-    volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/glusterfs
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
+
   
         
 
