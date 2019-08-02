@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: canal-server
+  name: paascloud-canal-server
 #  namespace: zhanghong
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: canal-server
+      app: paascloud-canal-server
   template:
     metadata:
       labels:
-        app: canal-server
+        app: paascloud-canal-server
     spec:
 #      nodeSelector:
 #        paascloud_kafka: default     
       imagePullSecrets:
       - name: secret-aliyuncs
       containers:
-      - name: canal-server
-        image: canal/canal-server
+      - name: paascloud-canal-server
+        image: canal/canal-server:v1.1.3
         imagePullPolicy: Always
 #        2222 sys , 8000 debug , 11111 canal , 11112 metrics
         ports:
@@ -32,42 +32,72 @@ spec:
         - containerPort: 2222
           name:  sys                   
         env:
+        - name: canal.id
+          value: 1                 
         - name: canal.instance.master.address
-          value: paascloud-db-mysql:3306
+          value: paascloud-db-mysql2:3306
         - name: canal.instance.dbUsername
-          value: canal
+          value: root
         - name: canal.instance.dbPassword
-          value: canal
+          value: root
         - name: canal.instance.connectionCharse
           value: UTF-8
         - name: canal.instance.tsdb.enable
-          value: 'true'
+          value: 'true'         
+        - name: canal.instance.tsdb.url 
+          value: jdbc:mysql://paascloud-db-mysql2:3306/canal_tsdb
+        - name: canal.instance.tsdb.dbUsername
+          value: root
+        - name: canal.instance.tsdb.dbPassword
+          value: root 
+        - name: canal.instance.tsdb.spring.xml 
+          value: classpath:spring/tsdb/mysql-tsdb.xml   
+        - name: canal.instance.global.mode 
+          value: spring
+        - name: canal.instance.global.lazy 
+          value: 'false'
+        - name: canal.instance.global.spring.xml 
+          value: classpath:spring/default-instance.xml         
         - name: canal.instance.gtidon
           value: 'false'  
         - name: canal.instance.filter.regex
-          value: paascloud_uac\\.pc_uac_user,.pc_uac_role,.pc_uac_group
-        - name: canal.instance.defaultDatabaseName
-          value: paascloud_uac      
+          value: paascloud.*\\.pc.*     
         - name: canal.zkServers
           value: paascloud-provider-zk:2181   
-#        - name: canal.serverMode
-#          value: kafka
-#        - name: canal.mq.servers
-#          value: paascloud-kafka:9092
-#        - name: canal.mq.flatMessage
-#          value: 'true'
-#        - name: canal.mq.transaction
-#          value: 'true'          
-#        - name: canal.mq.acks
-#          value: all                              
-#        - name: canal.mq.topic
-#          value: canal                 
-#        - name: canal.mq.partition
-#          value: '1'    
-#        - name: canal.mq.partitionHash
-#          value: pc_uac_user:id, pc_uac_role:id,  pc_uac_group:id             
-#        - name: canal.mq.partitionsNum
-#          value: 3       
+        - name: canal.serverMode
+          value: kafka
+        - name: canal.mq.servers
+          value: paascloud-kafka:9092
+        - name: canal.mq.flatMessage
+          value: 'true'
+        - name: canal.mq.transaction
+          value: 'true'          
+        - name: canal.mq.acks
+          value: all                              
+        - name: canal.mq.retries
+          value: 3
+        - name: canal.mq.batchSize
+          value: 1048576
+        - name: canal.mq.lingerMs
+          value: 10         
+        - name: canal.mq.bufferMemory
+          value: 33554432                              
+        - name: canal.mq.producerGroup
+          value: canal.producer
+        - name: canal.mq.canalBatchSize 
+          value: 50
+        - name: canal.mq.canalGetTimeout 
+          value: 100            
+        - name: canal.mq.accessChannel 
+          value: local 
+        - name: canal.mq.compressionType
+          value: none                                           
+        - name: canal.mq.dynamicTopic
+          value: paascloud.*\\.pc.*
+        - name: canal.mq.partition
+          value: 0
+
+    
 #库名.表名: 唯一主键，多个表之间用逗号分隔
 #canal.mq.partitionHash=mytest.person:id,mytest.role:id
                                                                                                
@@ -76,11 +106,11 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: canal-server
+  name: paascloud-canal-server
 #  namespace: zhanghong
 spec:
   selector:
-    app: canal-server
+    app: paascloud-canal-server
   ports:
   - protocol: TCP
     port: 11111
