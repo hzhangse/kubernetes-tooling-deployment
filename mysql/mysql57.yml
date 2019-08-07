@@ -28,7 +28,7 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           value: root
         - name: MYSQL_DATABASE
-          value: paascloud_pc
+          value: mysql
         volumeMounts:
         - name: configmap
           mountPath: /etc/mysql/conf.d/mysqld.cnf
