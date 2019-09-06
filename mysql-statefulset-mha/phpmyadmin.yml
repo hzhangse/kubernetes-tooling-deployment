@@ -1,0 +1,43 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: paascloud-mysql-phpmyadmin
+spec:
+  selector:
+    app: paascloud-mysql-phpmyadmin
+  ports:
+  - protocol: TCP
+    port: 82
+    targetPort: 80
+  externalIPs:
+    - 192.168.10.129
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paascloud-mysql-phpmyadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paascloud-mysql-phpmyadmin
+  template:
+    metadata:
+      labels:
+        app: paascloud-mysql-phpmyadmin
+    spec:
+      nodeName: okd-node-5
+      containers:
+      - name: paascloud-mysql-phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: server
+        env:
+        - name: PMA_HOST
+          value: mysql-0.mysql
+        - name: PMA_PORT
+          value: '3306'
+
