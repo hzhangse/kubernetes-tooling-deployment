@@ -7,7 +7,7 @@ spec:
     matchLabels:
       app: mysql
   serviceName: mysql
-  replicas: 2
+  replicas: 3
   template:
     metadata:
       labels:
@@ -65,12 +65,12 @@ spec:
       - name: mysql
         image: registry.cn-hangzhou.aliyuncs.com/rainbow954/mysql:5.7
         env:
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "1"
-#        - name: MYSQL_ROOT_PASSWORD
-#          value: root
-#        - name: MYSQL_DATABASE
-#          value: mysql          
+#        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+#          value: "1"
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_DATABASE
+          value: mysql          
         ports:
         - name: mysql
           containerPort: 3306
@@ -86,14 +86,24 @@ spec:
             memory: 1Gi
         livenessProbe:
           exec:
-            command: ["mysqladmin", "ping"]
+            command: 
+            - "mysqladmin"
+            - "--user=root"
+            - "--password=root"
+            - "ping"
           initialDelaySeconds: 30
-          periodSeconds: 10
+          periodSeconds: 5
           timeoutSeconds: 5
         readinessProbe:
           exec:
             # Check we can execute queries over TCP (skip-networking is off).
-            command: ["mysql", "-h", "127.0.0.1","-e", "SELECT 1"]
+            # command: ["mysql", "-h", "127.0.0.1","--user=root","-e", "SELECT 1"]
+            command:
+            - mysql
+            - "--user=root"
+            - "--password=root"
+            - "-e"
+            - "SELECT 1"
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
@@ -126,14 +136,14 @@ spec:
           # Check if we need to complete a clone by starting replication.
           if [[ -f change_master_to.sql.in ]]; then
             echo "Waiting for mysqld to be ready (accepting connections)"
-            until mysql -h 127.0.0.1 -e "SELECT 1"; do sleep 1; done
+            until mysql -h 127.0.0.1 --user=root --password=root  -e "SELECT 1"; do sleep 1; done
 
             echo "Initializing replication from clone position"
             #-e "$(<change_master_to.sql.in),  
-            mysql -h 127.0.0.1 -e  "stop slave; stop slave IO_THREAD;"
-            mysql -h 127.0.0.1 -e  "CHANGE MASTER TO MASTER_HOST='mysql-0.mysql',  
-                                MASTER_USER='root', MASTER_PASSWORD='', MASTER_CONNECT_RETRY=10,master_auto_position=1;" 
-            mysql -h 127.0.0.1 -e  "start slave IO_THREAD; start slave;"
+            mysql -h 127.0.0.1 -u root --password=root -e  "stop slave; stop slave IO_THREAD;"
+            mysql -h 127.0.0.1 -u root --password=root -e  "CHANGE MASTER TO MASTER_HOST='mysql-0.mysql',  
+                                MASTER_USER='root', MASTER_PASSWORD='root', MASTER_CONNECT_RETRY=10,master_auto_position=1;" 
+            mysql -h 127.0.0.1 -u root --password=root -e  "start slave IO_THREAD; start slave;"
  
             #START SLAVE; "|| exit 1
             #reset slave; start slave IO_THREAD; stop slave IO_THREAD; reset slave;START SLAVE;
@@ -154,7 +164,7 @@ spec:
           
           # Start a server to send backups when requested by peers.
           exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c \
-            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root "
+            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root --password=root"
  
         volumeMounts:
         - name: data
