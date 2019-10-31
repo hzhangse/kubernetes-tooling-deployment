@@ -81,76 +81,89 @@ data:
 
 ---
 
-apiVersion: v1
-kind: Pod
+kind: Deployment
+apiVersion: apps/v1
 metadata:
-  name: ubuntu-desktop
-#  namespace: zhanghong
-  labels:
-    app: ubuntu-desktop
+  name: ubuntu-desktop-okd-node-5
+#  namespace: saas
 spec:
-  restartPolicy: Always   
-  nodeName: okd-node-6  
-  imagePullSecrets:
-  - name: secret-aliyuncs         
-  containers:
-  - name: ubuntu-desktop
-    image:  registry.cn-hangzhou.aliyuncs.com/iotbull/ubuntu-desktop
-    imagePullPolicy: Always
-    ports:
-    - name: http
-      containerPort: 80
-    - name: vnc
-      containerPort: 5900
-    volumeMounts:
-    - mountPath: /work/workspace
-      name: workspace-volume 
-    - mountPath: /root/git
-      name: git-volume 
-    - mountPath: /root/.m2
-      name: m2-volume             
-    - name: configmap
-      mountPath: /root/.bashrc  
-      subPath: path/to/.bashrc   
-    securityContext:
-      privileged: true
-    env:
-    - name: VNC_PASSWORD
-      value: mypassword
-    - name: RESOLUTION
-      value: 1920x1080
-    resources:
-      requests:
-        cpu: 2
-        memory: 8Gi
-      limits:
-        memory: 8Gi      
-  volumes:
-  - name: workspace-volume
-    hostPath:
-      path: /work/zhanghong/workspace    
-  - name: m2-volume
-    hostPath:
-      path: /work/zhanghong/m2       
-  - name: git-volume
-    hostPath:
-      path: /work/zhanghong/git             
-  - name: configmap
-    configMap:
-      name: profile-config 
-      items:
-      - key: .bashrc
-        path: path/to/.bashrc
-          
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-desktop-okd-node-5
+  template:
+    metadata:
+      labels:
+        app: ubuntu-desktop-okd-node-5
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-aliyuncs
+      nodeName: okd-node-5
+      securityContext: {}
+      containers:
+        - resources:
+            limits:
+              memory: 6Gi
+            requests:
+              cpu: '2'
+              memory: 6Gi
+          name: ubuntu-desktop-okd-node-5
+          env:
+            - name: VNC_PASSWORD
+              value: mypassword
+            - name: RESOLUTION
+              value: 1920x1080
+          securityContext:
+            privileged: true
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: vnc
+              containerPort: 5900
+              protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: workspace-volume
+              mountPath: /work/workspace
+            - name: git-volume
+              mountPath: /root/git
+            - name: m2-volume
+              mountPath: /root/.m2
+            - name: configmap
+              mountPath: /root/.bashrc
+              subPath: path/to/.bashrc
+          image: registry.cn-hangzhou.aliyuncs.com/iotbull/ubuntu-desktop
+      volumes:
+        - name: workspace-volume
+          hostPath:
+            path: /work/zhanghong/workspace
+            type: ''
+        - name: m2-volume
+          hostPath:
+            path: /work/zhanghong/m2
+            type: ''
+        - name: git-volume
+          hostPath:
+            path: /work/zhanghong/git
+            type: ''
+        - name: configmap
+          configMap:
+            name: profile-config
+            items:
+              - key: .bashrc
+                path: path/to/.bashrc
+            defaultMode: 420
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: ubuntu-desktop
+  name: ubuntu-desktop-okd-node-5
 #  namespace: zhanghong
 spec:
   selector:
-    app: ubuntu-desktop
+    app: ubuntu-desktop-okd-node-5
   ports:
   - protocol: TCP
     port: 80
